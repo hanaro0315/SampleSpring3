@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.1.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+    
+    <context:component-scan base-package="com.hanaro.sample3"/>
+
+          
+    <http auto-config='true'>
+       <form-login 
+       		username-parameter="loginId"
+       		password-parameter="loginPwd"
+       		login-page="/login"
+       		login-processing-url="/loginAction"
+       		default-target-url="/"
+       		authentication-failure-handler-ref="LoginFailHandler"
+       		authentication-success-handler-ref="LoginSucHandler"
+       />
+       <!-- 
+       <expression-handler ref="webSecurityExpressionHandler"/>
+        -->
+        <intercept-url pattern="/member/**" access="hasRole('ROLE_USER')"/>
+    	<intercept-url pattern="/user/**" access="hasRole('ROLE_USER')"/>
+    	<intercept-url pattern="/admin/**" access="hasRole('ROLE_ADMIN')"/>
+    	<intercept-url pattern="/**" access="permitAll"/>
+    	<intercept-url pattern="/resources/**" access="permitAll" /> 
+
+    </http>
+    
+ 	<authentication-manager>
+ 		<authentication-provider ref="userAuthProvider"/>
+    	<authentication-provider user-service-ref="userService"/>
+	</authentication-manager>
+	
+	<jdbc-user-service data-source-ref="dataSource" id="serviceAuth"
+		users-by-username-query="SELECT ID, PASSWORD, ENABLED FROM SAMPLE_TABLE WHERE ID=?"
+		authorities-by-username-query="SELECT ID, AUTHORITY FROM SAMPLE_TABLE WHERE ID=?"
+
+	/>
+
+
+	<beans:bean id="userService" class="com.hanaro.sample3.CustomService"></beans:bean>
+ 	<beans:bean id="userAuthProvider" class="com.hanaro.sample3.CustomAuth"></beans:bean>
+ 
+	 <beans:bean id="customFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<beans:property name="dataSource" ref="dataSource"></beans:property>
+		<beans:property name="mapperLocations" value="classpath:/mappers/customSecurity.xml"></beans:property>
+	</beans:bean>
+	
+	<beans:bean id="LoginFailHandler" class="com.hanaro.sample3.LoginFailHandler">
+		<beans:property name="loginName" value="loginId"></beans:property>
+		<beans:property name="loginPw" value="loginPw"></beans:property>
+		<beans:property name="errorname" value="ERRORMSG"></beans:property>
+		<beans:property name="defaultFailUrl" value="/login?error" ></beans:property>
+	</beans:bean>
+	
+	<beans:bean id="LoginSucHandler" class="com.hanaro.sample3.LoginSucHandler">
+		<beans:property name="loginName" value="loginId"></beans:property>
+		<beans:property name="defaultUrl" value="/"></beans:property>
+	</beans:bean>
+ <!--
+ 	<beans:bean id="webSecurityExpressionHandler" class="com.hanaro.sample3.CustomConfig"></beans:bean>
+   -->	
+</beans:beans>
+
